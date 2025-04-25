@@ -31,23 +31,13 @@ Streamlit (for GUI)
 
 🚀 How to Run
 Clone the Repository
-
-bash
-Copy
-Edit
 git clone https://github.com/yourusername/emotion-music-recommendation.git
 cd emotion-music-recommendation
+
 Install Dependencies
-
-bash
-Copy
-Edit
 pip install -r requirements.txt
-Run the App
 
-bash
-Copy
-Edit
+Run the App
 streamlit run app.py
 🧠 How It Works
 User enables webcam.
