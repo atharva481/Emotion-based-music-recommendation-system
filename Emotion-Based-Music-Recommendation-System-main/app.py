@@ -6,10 +6,11 @@ import streamlit.components.v1 as components
 import cv2
 import numpy as np
 import tensorflow
+import time
 from tensorflow import keras
 from keras.models import load_model
 
-st.set_page_config(page_title="Emotion Based Song Recommendation Engine", layout="wide")
+st.set_page_config(page_title="Emotion Based Music Recommendation Engine", layout="wide")
 
 model_path = "facialemotionmodel.h5"
 emotion_model = load_model(model_path)
@@ -58,7 +59,7 @@ def n_neighbors_uri_audio(genre, start_year, end_year, test_feat):
     audios = genre_data.iloc[n_neighbors][audio_feats].to_numpy()
     return uris, audios
 
-title = "Emotion Based Song Recommendation Engine"
+title = "Emotion Based Music Recommendation System"
 st.title(title)
 
 st.write("This project recommends emotion-based music by matching detected moods with pre-curated playlists, using machine learning.")
@@ -94,26 +95,37 @@ with st.container():
             placeholder = st.empty()
             cap = cv2.VideoCapture(0)
             detected_emotion = None
-
+            start_time = time.time()
+            countdown = 6  # 3 seconds countdown
+        
             while True:
                 ret, frame = cap.read()
                 if not ret:
                     break
-
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-                for (x, y, w, h) in faces:
-                    face = gray[y:y+h, x:x+w]
-                    detected_emotion = detect_emotion(face, emotion_model)
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                    cv2.putText(frame, detected_emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
-
+        
+                current_time = time.time()
+                time_left = countdown - int(current_time - start_time)
+                
+                if time_left > 0:
+                    # Show countdown
+                    cv2.putText(frame, str(time_left), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 3)
+                elif time_left == 0:
+                    # Capture and process frame
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+                    for (x, y, w, h) in faces:
+                        face = gray[y:y+h, x:x+w]
+                        detected_emotion = detect_emotion(face, emotion_model)
+                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                        cv2.putText(frame, detected_emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
+                        break
+        
                 placeholder.image(frame, channels="BGR", caption="Detecting Emotion")
-
-                if detected_emotion:
+        
+                if detected_emotion or time_left < -1:  # Exit after detection or 1 second after countdown
                     break
-
+        
             cap.release()
             st.write(f"Detected Emotion: **{detected_emotion}**")
             if detected_emotion in emotion_presets:
